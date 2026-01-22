@@ -1,0 +1,6 @@
+{
+  "name": "web-bridge",
+  "version": "1.0.0",
+  "description": "Expose all Claude Code messages to a local web interface on port 6567. See prompts, tool calls, and events in real-time.",
+  "hooks": "./hooks/hooks.json"
+}

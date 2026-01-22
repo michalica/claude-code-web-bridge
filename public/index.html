@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code Bridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --bg-card: #141416;
+      --bg-hover: #1a1a1d;
+      --border: #27272a;
+      --text: #fafafa;
+      --text-muted: #71717a;
+      --accent: #8b5cf6;
+      --accent-glow: rgba(139, 92, 246, 0.3);
+      --green: #22c55e;
+      --green-glow: rgba(34, 197, 94, 0.2);
+      --red: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.2);
+      --orange: #f59e0b;
+      --orange-glow: rgba(245, 158, 11, 0.15);
+      --blue: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(10, 10, 11, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), #6366f1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--red);
+      transition: all 0.3s ease;
+    }
+
+    .status-dot.connected {
+      background: var(--green);
+      box-shadow: 0 0 12px var(--green-glow);
+    }
+
+    /* Tabs */
+    .tabs-container {
+      position: fixed;
+      top: 69px;
+      left: 0;
+      right: 0;
+      z-index: 99;
+      background: rgba(10, 10, 11, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tabs {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab {
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .tab:hover {
+      color: var(--text);
+    }
+
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-badge {
+      position: absolute;
+      top: 8px;
+      right: 4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      background: var(--orange);
+      color: #000;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Main */
+    .main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 150px 24px 100px;
+      min-height: 100vh;
+    }
+
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 24px;
+    }
+
+    .empty-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .empty-desc {
+      font-size: 14px;
+      text-align: center;
+    }
+
+    /* Notifications */
+    .notifications {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .notification {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .notification:hover {
+      background: var(--bg-hover);
+      border-color: #3f3f46;
+    }
+
+    .notification.pending {
+      border-color: var(--orange);
+      background: linear-gradient(to bottom, rgba(245, 158, 11, 0.08), transparent);
+      box-shadow: 0 0 40px var(--orange-glow);
+    }
+
+    .notification.approved {
+      border-left: 3px solid var(--green);
+    }
+
+    .notification.denied {
+      border-left: 3px solid var(--red);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .notification-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .notification-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .event-type {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--bg);
+    }
+
+    .event-type.tool { background: rgba(139, 92, 246, 0.2); color: var(--accent); }
+    .event-type.prompt { background: rgba(59, 130, 246, 0.2); color: var(--blue); }
+    .event-type.session { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+    .event-type.stop { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+
+    .notification-time {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .notification-content {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .tool-name {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .command-preview {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: var(--bg);
+      border-radius: 10px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      color: var(--text-muted);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .command-preview code {
+      color: var(--text);
+    }
+
+    /* Action Buttons */
+    .notification-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-approve {
+      background: var(--green);
+      color: #000;
+    }
+
+    .btn-approve:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px var(--green-glow);
+    }
+
+    .btn-deny {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-deny:hover {
+      background: var(--red);
+      border-color: var(--red);
+      transform: translateY(-1px);
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.approved {
+      background: var(--green-glow);
+      color: var(--green);
+    }
+
+    .status-badge.denied {
+      background: var(--red-glow);
+      color: var(--red);
+    }
+
+    .status-badge.waiting {
+      background: var(--orange-glow);
+      color: var(--orange);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    /* Footer Stats */
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 11, 0.8);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      padding: 12px 24px;
+    }
+
+    .footer-content {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stats {
+      display: flex;
+      gap: 24px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-small {
+      padding: 8px 14px;
+      font-size: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-small:hover {
+      background: var(--bg-hover);
+      border-color: #3f3f46;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .header-content {
+        padding: 12px 16px;
+      }
+
+      .tabs {
+        padding: 0 16px;
+      }
+
+      .main {
+        padding: 140px 16px 90px;
+      }
+
+      .notification {
+        padding: 16px;
+      }
+
+      .btn {
+        padding: 12px 16px;
+      }
+
+      .stats {
+        gap: 16px;
+      }
+
+      .logo span {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        <span>Claude Code Bridge</span>
+      </div>
+      <div class="status-indicator">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Connecting...</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs-container">
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-session="all">All Sessions</div>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="notifications" id="notifications">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">⚡</div>
+        <div class="empty-title">Waiting for events</div>
+        <div class="empty-desc">Start Claude Code in a terminal to see notifications here</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="stats">
+        <span>Messages <span class="stat-value" id="messageCount">0</span></span>
+        <span>Pending <span class="stat-value" id="pendingCount">0</span></span>
+      </div>
+      <div class="footer-actions">
+        <button class="btn-small" onclick="clearMessages()">Clear</button>
+        <button class="btn-small" onclick="exportMessages()">Export</button>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    let messages = [];
+    let sessions = [];
+    let pendingPermissions = new Set();
+    let ws = null;
+    let activeSession = 'all';
+
+    function connect() {
+      ws = new WebSocket(`ws://${location.host}`);
+
+      ws.onopen = () => {
+        document.getElementById('statusDot').classList.add('connected');
+        document.getElementById('statusText').textContent = 'Connected';
+      };
+
+      ws.onclose = () => {
+        document.getElementById('statusDot').classList.remove('connected');
+        document.getElementById('statusText').textContent = 'Reconnecting...';
+        setTimeout(connect, 2000);
+      };
+
+      ws.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        handleMessage(data);
+      };
+    }
+
+    function handleMessage(data) {
+      switch (data.type) {
+        case 'init':
+          messages = data.messages || [];
+          sessions = data.sessions || [];
+          pendingPermissions = new Set(data.pendingPermissions || []);
+          renderTabs();
+          renderNotifications();
+          updateStats();
+          break;
+
+        case 'event':
+        case 'permission_request':
+          messages.push(data.event);
+          if (messages.length > 500) messages.shift();
+          if (data.type === 'permission_request') {
+            pendingPermissions.add(data.event.id);
+            notifyUser(data.event);
+          }
+          addNotification(data.event);
+          updateStats();
+          break;
+
+        case 'permission_decided':
+          pendingPermissions.delete(data.eventId);
+          const msg = messages.find(m => m.id === data.eventId);
+          if (msg) {
+            msg.pendingPermission = false;
+            msg.permissionDecision = data.decision;
+          }
+          renderNotifications();
+          updateStats();
+          break;
+
+        case 'session_start':
+          sessions.push(data.session);
+          renderTabs();
+          break;
+
+        case 'session_end':
+          sessions = sessions.filter(s => s.id !== data.sessionId);
+          renderTabs();
+          break;
+
+        case 'clear':
+          messages = [];
+          pendingPermissions.clear();
+          renderNotifications();
+          updateStats();
+          break;
+      }
+    }
+
+    function notifyUser(event) {
+      document.title = '🔔 Action Required - Claude Code';
+      setTimeout(() => { document.title = 'Claude Code Bridge'; }, 3000);
+
+      if (Notification.permission === 'granted') {
+        const body = event.tool_input?.command || event.tool_input?.file_path || 'Approval needed';
+        new Notification(`${event.tool_name} requires approval`, { body });
+      }
+    }
+
+    function renderTabs() {
+      const tabsContainer = document.getElementById('tabs');
+      const allPending = messages.filter(m => m.pendingPermission).length;
+
+      let html = `<div class="tab ${activeSession === 'all' ? 'active' : ''}" data-session="all">
+        All Sessions
+        ${allPending > 0 ? `<span class="tab-badge">${allPending}</span>` : ''}
+      </div>`;
+
+      sessions.forEach((s, i) => {
+        const sessionPending = messages.filter(m => m.session_id === s.id && m.pendingPermission).length;
+        const shortId = s.id.substring(0, 6);
+        const isActive = activeSession === s.id;
+        html += `<div class="tab ${isActive ? 'active' : ''}" data-session="${s.id}">
+          Session ${i + 1}
+          ${sessionPending > 0 ? `<span class="tab-badge">${sessionPending}</span>` : ''}
+        </div>`;
+      });
+
+      tabsContainer.innerHTML = html;
+
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.onclick = () => {
+          activeSession = tab.dataset.session;
+          renderTabs();
+          renderNotifications();
+        };
+      });
+    }
+
+    function renderNotifications() {
+      const container = document.getElementById('notifications');
+      const emptyState = document.getElementById('emptyState');
+
+      let filtered = messages;
+      if (activeSession !== 'all') {
+        filtered = messages.filter(m => m.session_id === activeSession);
+      }
+
+      // Show newest first
+      filtered = [...filtered].reverse();
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        container.appendChild(emptyState);
+        emptyState.style.display = 'flex';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      container.innerHTML = filtered.map(m => createNotificationHTML(m)).join('');
+    }
+
+    function addNotification(msg) {
+      if (activeSession !== 'all' && msg.session_id !== activeSession) {
+        renderTabs();
+        return;
+      }
+
+      const container = document.getElementById('notifications');
+      document.getElementById('emptyState').style.display = 'none';
+
+      const div = document.createElement('div');
+      div.innerHTML = createNotificationHTML(msg);
+      container.insertBefore(div.firstChild, container.firstChild);
+
+      renderTabs();
+    }
+
+    function createNotificationHTML(m) {
+      const time = new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const eventType = m.hook_event_name || 'Unknown';
+
+      let typeClass = 'tool';
+      if (eventType === 'UserPromptSubmit') typeClass = 'prompt';
+      else if (eventType.includes('Session')) typeClass = 'session';
+      else if (eventType === 'Stop') typeClass = 'stop';
+
+      let content = '';
+      let preview = '';
+
+      if (m.tool_name) {
+        content = `<span class="tool-name">${m.tool_name}</span>`;
+        if (m.tool_input?.command) {
+          preview = `<div class="command-preview">$ <code>${esc(truncate(m.tool_input.command, 100))}</code></div>`;
+        } else if (m.tool_input?.file_path) {
+          preview = `<div class="command-preview"><code>${esc(m.tool_input.file_path)}</code></div>`;
+        } else if (m.tool_input?.pattern) {
+          preview = `<div class="command-preview"><code>${esc(m.tool_input.pattern)}</code></div>`;
+        }
+      } else if (m.prompt) {
+        content = esc(truncate(m.prompt, 150));
+      } else if (m.message) {
+        content = esc(truncate(m.message, 150));
+      } else {
+        content = eventType;
+      }
+
+      let statusHTML = '';
+      let notificationClass = 'notification';
+
+      if (m.hook_event_name === 'PreToolUse') {
+        if (m.pendingPermission) {
+          notificationClass += ' pending';
+          statusHTML = `
+            <div class="notification-actions">
+              <button class="btn btn-approve" onclick="approve(${m.id}, event)">Approve</button>
+              <button class="btn btn-deny" onclick="deny(${m.id}, event)">Deny</button>
+            </div>`;
+        } else if (m.permissionDecision === 'allow') {
+          notificationClass += ' approved';
+          statusHTML = `<div class="status-badge approved">✓ Approved</div>`;
+        } else if (m.permissionDecision === 'deny') {
+          notificationClass += ' denied';
+          statusHTML = `<div class="status-badge denied">✕ Denied</div>`;
+        }
+      }
+
+      return `<div class="${notificationClass}">
+        <div class="notification-header">
+          <div class="notification-meta">
+            <span class="event-type ${typeClass}">${formatEventType(eventType)}</span>
+          </div>
+          <span class="notification-time">${time}</span>
+        </div>
+        <div class="notification-content">${content}${preview}</div>
+        ${statusHTML}
+      </div>`;
+    }
+
+    function formatEventType(type) {
+      if (type === 'PreToolUse') return 'Tool';
+      if (type === 'PostToolUse') return 'Complete';
+      if (type === 'UserPromptSubmit') return 'Prompt';
+      if (type === 'SessionStart') return 'Start';
+      if (type === 'SessionEnd') return 'End';
+      return type;
+    }
+
+    function approve(eventId, e) {
+      e.stopPropagation();
+      fetch(`/api/permission/${eventId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision: 'allow' })
+      });
+    }
+
+    function deny(eventId, e) {
+      e.stopPropagation();
+      fetch(`/api/permission/${eventId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision: 'deny', reason: 'Denied via web UI' })
+      });
+    }
+
+    function updateStats() {
+      document.getElementById('messageCount').textContent = messages.length;
+      document.getElementById('pendingCount').textContent = pendingPermissions.size;
+    }
+
+    function clearMessages() {
+      fetch('/api/messages', { method: 'DELETE' });
+    }
+
+    function exportMessages() {
+      const blob = new Blob([JSON.stringify(messages, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `claude-events-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+    }
+
+    function truncate(str, len) {
+      if (!str) return '';
+      return str.length > len ? str.substring(0, len) + '...' : str;
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Request notification permission
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    connect();
+  </script>
+</body>
+</html>
