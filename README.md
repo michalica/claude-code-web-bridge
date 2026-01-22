@@ -36,9 +36,9 @@ claude
 
 - **Real-time event streaming** via WebSocket
 - **Permission control** - Approve/Deny tool usage from the browser
-- **Session tracking** - See all active Claude sessions
+- **Session tracking** - See all active Claude sessions with tabs
 - **Browser notifications** when permission is needed
-- **Filter & export** events
+- **Export** events as JSON
 - **30s timeout** - Auto-approves if no response (configurable)
 
 ---
@@ -80,7 +80,7 @@ Get recent events.
 [
   {
     "id": 1,
-    "timestamp": "2024-01-22T14:30:00.000Z",
+    "timestamp": "2026-01-22T14:30:00.000Z",
     "hook_event_name": "PreToolUse",
     "session_id": "abc-123",
     "tool_name": "Bash",
@@ -111,9 +111,9 @@ Get active Claude Code sessions.
 [
   {
     "id": "abc-123",
-    "startedAt": "2024-01-22T14:30:00.000Z",
+    "startedAt": "2026-01-22T14:30:00.000Z",
     "cwd": "/Users/you/project",
-    "lastActivity": "2024-01-22T14:35:00.000Z",
+    "lastActivity": "2026-01-22T14:35:00.000Z",
     "eventCount": 42
   }
 ]
@@ -268,6 +268,36 @@ Connect to `ws://localhost:6567` for real-time events.
 | `PostToolUse` | Tool finished | No |
 | `Stop` | Claude finished responding | No |
 | `Notification` | System notification | No |
+
+---
+
+## Hook Output Format
+
+The hook script outputs JSON to Claude Code. For `PreToolUse` events, Claude Code expects the `hookSpecificOutput` format:
+
+**Allow a tool:**
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "allow",
+    "permissionDecisionReason": "Approved via web interface"
+  }
+}
+```
+
+**Deny a tool:**
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "deny",
+    "permissionDecisionReason": "Blocked by user"
+  }
+}
+```
+
+**Note:** The `PreToolUse` hook timeout is set to 35 seconds (30s permission wait + 5s buffer) to allow time for user approval via the web UI.
 
 ---
 
